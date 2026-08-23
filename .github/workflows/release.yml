@@ -42,15 +42,29 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
+
+      - name: Resolve Release Tag
+        id: vars
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+            TITLE="Astrocat Lumo ${GITHUB_REF_NAME}"
+          else
+            TAG="v0.1.0-build-${GITHUB_RUN_NUMBER}"
+            TITLE="Astrocat Lumo Build #${GITHUB_RUN_NUMBER}"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_name=${TITLE}" >> "$GITHUB_OUTPUT"
 
       - name: Build Tauri app & create release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('v0.1.0-build-{0}', github.run_number) }}
-          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('Astrocat Lumo {0}', github.ref_name) || format('Astrocat Lumo Build #{0}', github.run_number) }}
+          tagName: ${{ steps.vars.outputs.tag }}
+          releaseName: ${{ steps.vars.outputs.release_name }}
           releaseBody: 'Installers and binaries for Astrocat Lumo (Windows .msi / .exe, macOS .dmg, Linux .deb / .AppImage).'
           releaseDraft: false
           prerelease: false
