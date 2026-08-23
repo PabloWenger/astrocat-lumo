@@ -11,8 +11,6 @@ fn is_binary_extension(ext: &str) -> bool {
     )
 }
 
-const MAX_CONTEXT_CHARS: usize = 60_000;
-
 pub fn build_prompt(
     root_path: &Path,
     selected_files: &[String],
@@ -20,8 +18,10 @@ pub fn build_prompt(
     tree_mode: &str,
     show_all: bool,
     max_tree_entries: usize,
+    max_context_chars: usize,
 ) -> String {
     let mut prompt = String::new();
+    let char_limit = if max_context_chars == 0 { usize::MAX } else { max_context_chars };
     
     // 1. Estructura del proyecto
     if tree_mode != "none" {
@@ -54,8 +54,8 @@ pub fn build_prompt(
         
         if let Ok(content) = read_file(path) {
             let chunk = content;
-            if prompt.len() + chunk.len() > MAX_CONTEXT_CHARS {
-                let remaining = MAX_CONTEXT_CHARS.saturating_sub(prompt.len());
+            if prompt.len() + chunk.len() > char_limit {
+                let remaining = char_limit.saturating_sub(prompt.len());
                 if remaining > 100 {
                     let truncated: String = chunk.chars().take(remaining).collect();
                     prompt.push_str(&truncated);

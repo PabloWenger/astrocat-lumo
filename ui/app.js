@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearTreeBtn = document.getElementById('clear-tree-btn');
   const treeScopeControl = document.getElementById('tree-scope-control');
   const treeLimitControl = document.getElementById('tree-limit-control');
+  const promptLimitControl = document.getElementById('prompt-limit-control');
   const previewLoader = document.getElementById('preview-loader');
   const progressBarTrack = document.getElementById('progress-bar-track');
 
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let fileTreeData = null;
   let currentTreeMode = 'full'; // 'full' | 'scoped' | 'none'
   let currentTreeLimit = 2500; // default 2500 items max
+  let currentPromptLimit = 60000; // default 60k chars max
   let showAllToggle = false;
   let cachedBaseContext = '';
   let debounceTimer = null;
@@ -37,6 +39,17 @@ document.addEventListener('DOMContentLoaded', () => {
         treeLimitControl.querySelectorAll('.segment').forEach((s) => s.classList.remove('active'));
         btn.classList.add('active');
         currentTreeLimit = parseInt(btn.getAttribute('data-limit') || '2500', 10);
+        scheduleUpdateBaseContext();
+      });
+    });
+  }
+
+  if (promptLimitControl) {
+    promptLimitControl.querySelectorAll('.segment').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        promptLimitControl.querySelectorAll('.segment').forEach((s) => s.classList.remove('active'));
+        btn.classList.add('active');
+        currentPromptLimit = parseInt(btn.getAttribute('data-chars') || '60000', 10);
         scheduleUpdateBaseContext();
       });
     });
@@ -373,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
         treeMode: currentTreeMode,
         showAll: showAllToggle,
         maxTreeEntries: currentTreeLimit,
+        maxContextChars: currentPromptLimit,
       });
 
       cachedBaseContext = baseContext.trim();
@@ -437,6 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         treeMode: currentTreeMode,
         showAll: showAllToggle,
         maxTreeEntries: currentTreeLimit,
+        maxContextChars: currentPromptLimit,
       });
 
       await invoke('inject_to_lumo', { text: prompt });

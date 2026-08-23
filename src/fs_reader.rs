@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 fn get_walker(root_path: &Path, show_all: bool) -> Walk {
     let mut builder = WalkBuilder::new(root_path);
-    builder.max_depth(Some(8));
+    builder.max_depth(Some(64));
     if show_all {
         builder.hidden(false).ignore(false).git_ignore(false);
         // Only ignore .git to prevent absolute chaos, but show everything else
@@ -154,7 +154,7 @@ pub fn render_tree(root_path: &Path, selected_files: &[String], mode: &str, show
 fn render_full_tree(root_path: &Path, show_all: bool, max_entries: usize) -> String {
     let mut tree_str = String::new();
     let mut count = 0;
-    let limit = if max_entries == 0 { 50_000 } else { max_entries };
+    let limit = if max_entries == 0 { usize::MAX } else { max_entries };
     let walker = get_walker(root_path, show_all);
     
     for result in walker {
@@ -170,7 +170,7 @@ fn render_full_tree(root_path: &Path, show_all: bool, max_entries: usize) -> Str
             
             count += 1;
             if count > limit {
-                tree_str.push_str(&format!("  [... árbol limitado a los primeros {} elementos. Puedes subir el tope en la barra o usar 'Scoped' ...]\n", limit));
+                tree_str.push_str(&format!("  [... árbol limitado a los primeros {} elementos. Usa '∞ Max' para volcar todo sin límite ...]\n", limit));
                 break;
             }
             

@@ -29,9 +29,11 @@ pub fn build_context(
     tree_mode: Option<String>,
     show_all: Option<bool>,
     max_tree_entries: Option<usize>,
+    max_context_chars: Option<usize>,
 ) -> Result<String, String> {
     let mode = tree_mode.unwrap_or_else(|| "full".into());
     let limit = max_tree_entries.unwrap_or(2500);
+    let char_limit = max_context_chars.unwrap_or(60_000);
     let prompt = context_builder::build_prompt(
         Path::new(&root),
         &files,
@@ -39,6 +41,7 @@ pub fn build_context(
         &mode,
         show_all.unwrap_or(false),
         limit,
+        char_limit,
     );
     Ok(prompt)
 }
