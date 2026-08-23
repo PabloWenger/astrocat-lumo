@@ -24,9 +24,13 @@ Sidecar de escritorio nativo en **Rust + Tauri 2.0** diseñado para inspeccionar
   - `🌳 Full`: Incluye el árbol completo del repositorio en el prompt.
   - `🌿 Scoped`: Genera un árbol compacto centrado en los archivos seleccionados y sus ramas directas.
   - `🚫 None`: Omite la estructura de carpetas del contexto.
+- **Control de Límites y Carga de Archivos:**
+  - **All Files**: Por defecto, la app ignora carpetas pesadas (node_modules, target, etc.) y respeta `.gitignore`. Activar esta opción omite esos filtros y fuerza a leer todo (útil para discos o carpetas sin código).
+  - **Tree Max**: Define el límite de archivos y carpetas impresas visualmente en el árbol de contexto. Valores más altos (o "∞ Max") generarán árboles enormes, aumentando el coste del token de contexto.
+  - **Prompt Max**: Tope de caracteres totales de texto plano permitidos en el prompt antes de truncar.
+  > ⚠️ **Peligro (Modos ∞ Max):** El uso de límites infinitos bajo demanda está diseñado para casos donde tienes certeza del volumen de archivos. Si seleccionas "∞" en discos enteros, podrías agotar la memoria RAM o colapsar la UI al intentar cargar millones de elementos.
 - **Gestión de Contexto y Estadísticas en Vivo:**
   - Contador de caracteres y estimación de tokens en tiempo real.
-  - Límite de seguridad automático (~60,000 caracteres) con advertencia de truncado.
 - **Puente DOM Desacoplado:**
   - Inyección JavaScript en Proton Lumo parametrizada mediante `lumo_selectors.json` (actualizable sin recompilar la app).
 

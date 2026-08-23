@@ -474,3 +474,14 @@ textarea:focus {
   height: 4px;
   width: 52px;
 }
+
+.danger-segment {
+  color: #ff5555;
+}
+.danger-segment:hover {
+  background: rgba(255, 85, 85, 0.1);
+}
+.danger-segment.active {
+  background: #ff5555 !important;
+  color: #1e1e1e !important;
+}

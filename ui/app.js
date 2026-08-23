@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const selectDirBtn = document.getElementById('select-dir-btn');
   const sendBtn = document.getElementById('send-btn');
+  const sendBtnLower = document.getElementById('send-btn-lower');
   const repoPathEl = document.getElementById('repo-path');
   const fileTreeEl = document.getElementById('file-tree');
   const queryInput = document.getElementById('query-input');
@@ -409,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const approxTokens = Math.round(totalChars / 3.8);
     previewStats.textContent = `${totalChars.toLocaleString()} chars (~${approxTokens.toLocaleString()} tokens)`;
     sendBtn.disabled = !currentRoot || (!query && selectedFiles.size === 0 && currentTreeMode === 'none');
+    sendBtnLower.disabled = sendBtn.disabled;
   }
 
   let queryDebounceTimer = null;
@@ -431,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Send to Lumo
-  sendBtn.addEventListener('click', async () => {
+  const handleSend = async () => {
     if (!currentRoot) return;
 
     const query = queryInput.value.trim();
@@ -442,7 +444,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       sendBtn.disabled = true;
+      sendBtnLower.disabled = true;
       sendBtn.textContent = 'Sending...';
+      sendBtnLower.textContent = 'Sending...';
 
       const prompt = await invoke('build_context', {
         root: currentRoot,
@@ -457,17 +461,25 @@ document.addEventListener('DOMContentLoaded', () => {
       await invoke('inject_to_lumo', { text: prompt });
 
       sendBtn.textContent = 'Sent! ✓';
+      sendBtnLower.textContent = 'Sent! ✓';
       setTimeout(() => {
         sendBtn.disabled = false;
+        sendBtnLower.disabled = false;
         sendBtn.textContent = '➤ Lumo';
+        sendBtnLower.textContent = '➤ Lumo';
       }, 1200);
     } catch (e) {
       console.error(e);
       alert(`Error injecting to Lumo: ${e}`);
       sendBtn.disabled = false;
+      sendBtnLower.disabled = false;
       sendBtn.textContent = '➤ Lumo';
+      sendBtnLower.textContent = '➤ Lumo';
     }
-  });
+  };
+
+  sendBtn.addEventListener('click', handleSend);
+  sendBtnLower.addEventListener('click', handleSend);
 
   // Vertical Resizer for Top Section / Query Section
   const horizontalResizer = document.getElementById('horizontal-resizer');

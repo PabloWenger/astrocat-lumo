@@ -243,5 +243,23 @@ fn render_scoped_tree(root_path: &Path, selected_files: &[String], show_all: boo
 }
 
 pub fn read_file(path: &Path) -> Result<String, String> {
-    fs::read_to_string(path).map_err(|e| e.to_string())
+    let metadata = fs::metadata(path).map_err(|e| e.to_string())?;
+    
+    // Omit files larger than 5MB
+    if metadata.len() > 5 * 1024 * 1024 {
+        return Err("El archivo supera los 5MB y fue omitido para prevenir cuelgues.".into());
+    }
+
+    // Peek first 1024 bytes to check for null bytes (heuristic for binary files without extensions)
+    if let Ok(mut file) = fs::File::open(path) {
+        use std::io::Read;
+        let mut buffer = [0; 1024];
+        if let Ok(bytes_read) = file.read(&mut buffer) {
+            if buffer[..bytes_read].contains(&0) {
+                return Err("Binario detectado (contiene bytes nulos) y fue omitido.".into());
+            }
+        }
+    }
+
+    fs::read_to_string(path).map_err(|e| format!("Error decodificando UTF-8: {}", e))
 }
