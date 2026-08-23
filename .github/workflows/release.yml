@@ -1,71 +1,49 @@
-name: Release & Multiplatform Build
+name: "Release Astrocat Lumo"
 
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
-
-permissions:
-  contents: write
+      - "v*"
 
 jobs:
-  build:
+  publish-tauri:
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: 'windows-latest'
-            args: '--target x86_64-pc-windows-msvc'
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04'
-            args: ''
+          - platform: "macos-latest"
+            args: "--target aarch64-apple-darwin"
+          - platform: "macos-latest"
+            args: "--target x86_64-apple-darwin"
+          - platform: "ubuntu-22.04"
+            args: ""
+          - platform: "windows-latest"
+            args: ""
 
     runs-on: ${{ matrix.platform }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Rust stable
+      - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-
-      - name: Install Linux dependencies
+      - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - name: Resolve Release Tag
-        id: vars
-        shell: bash
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF_NAME}"
-            TITLE="Astrocat Lumo ${GITHUB_REF_NAME}"
-          else
-            TAG="v0.1.0-build-${GITHUB_RUN_NUMBER}"
-            TITLE="Astrocat Lumo Build #${GITHUB_RUN_NUMBER}"
-          fi
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "release_name=${TITLE}" >> "$GITHUB_OUTPUT"
-
-      - name: Build Tauri app & create release
-        uses: tauri-apps/tauri-action@v0
+      - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ steps.vars.outputs.tag }}
-          releaseName: ${{ steps.vars.outputs.release_name }}
-          releaseBody: 'Installers and binaries for Astrocat Lumo (Windows .msi / .exe, macOS .dmg, Linux .deb / .AppImage).'
-          releaseDraft: false
+          tagName: app-v__VERSION__
+          releaseName: "Astrocat Lumo v__VERSION__"
+          releaseBody: "See the assets to download this version and install."
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
