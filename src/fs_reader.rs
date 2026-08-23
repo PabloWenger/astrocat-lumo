@@ -139,7 +139,7 @@ fn insert_node(root: &mut FileNode, relative: &Path, full_path: PathBuf, is_dir:
 
 use std::collections::HashSet;
 
-pub fn render_tree(root_path: &Path, selected_files: &[String], mode: &str, show_all: bool) -> String {
+pub fn render_tree(root_path: &Path, selected_files: &[String], mode: &str, show_all: bool, max_entries: usize) -> String {
     if mode == "none" {
         return String::new();
     }
@@ -148,14 +148,13 @@ pub fn render_tree(root_path: &Path, selected_files: &[String], mode: &str, show
         return render_scoped_tree(root_path, selected_files, show_all);
     }
 
-    render_full_tree(root_path, show_all)
+    render_full_tree(root_path, show_all, max_entries)
 }
 
-const MAX_TREE_RENDER_ENTRIES: usize = 500;
-
-fn render_full_tree(root_path: &Path, show_all: bool) -> String {
+fn render_full_tree(root_path: &Path, show_all: bool, max_entries: usize) -> String {
     let mut tree_str = String::new();
     let mut count = 0;
+    let limit = if max_entries == 0 { 50_000 } else { max_entries };
     let walker = get_walker(root_path, show_all);
     
     for result in walker {
@@ -170,8 +169,8 @@ fn render_full_tree(root_path: &Path, show_all: bool) -> String {
             }
             
             count += 1;
-            if count > MAX_TREE_RENDER_ENTRIES {
-                tree_str.push_str("  [... árbol truncado: más de 500 elementos. Usa el modo 'Scoped' para ver solo tus archivos seleccionados ...]\n");
+            if count > limit {
+                tree_str.push_str(&format!("  [... árbol limitado a los primeros {} elementos. Puedes subir el tope en la barra o usar 'Scoped' ...]\n", limit));
                 break;
             }
             

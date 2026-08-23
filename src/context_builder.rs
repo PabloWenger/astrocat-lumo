@@ -13,12 +13,19 @@ fn is_binary_extension(ext: &str) -> bool {
 
 const MAX_CONTEXT_CHARS: usize = 60_000;
 
-pub fn build_prompt(root_path: &Path, selected_files: &[String], query: &str, tree_mode: &str, show_all: bool) -> String {
+pub fn build_prompt(
+    root_path: &Path,
+    selected_files: &[String],
+    query: &str,
+    tree_mode: &str,
+    show_all: bool,
+    max_tree_entries: usize,
+) -> String {
     let mut prompt = String::new();
     
     // 1. Estructura del proyecto
     if tree_mode != "none" {
-        let tree = render_tree(root_path, selected_files, tree_mode, show_all);
+        let tree = render_tree(root_path, selected_files, tree_mode, show_all, max_tree_entries);
         if !tree.is_empty() {
             prompt.push_str("## Estructura del proyecto\n```text\n");
             prompt.push_str(&tree);

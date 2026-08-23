@@ -28,9 +28,18 @@ pub fn build_context(
     query: String,
     tree_mode: Option<String>,
     show_all: Option<bool>,
+    max_tree_entries: Option<usize>,
 ) -> Result<String, String> {
     let mode = tree_mode.unwrap_or_else(|| "full".into());
-    let prompt = context_builder::build_prompt(Path::new(&root), &files, &query, &mode, show_all.unwrap_or(false));
+    let limit = max_tree_entries.unwrap_or(2500);
+    let prompt = context_builder::build_prompt(
+        Path::new(&root),
+        &files,
+        &query,
+        &mode,
+        show_all.unwrap_or(false),
+        limit,
+    );
     Ok(prompt)
 }
 

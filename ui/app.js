@@ -13,11 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearSelectionBtn = document.getElementById('clear-selection-btn');
   const clearTreeBtn = document.getElementById('clear-tree-btn');
   const treeScopeControl = document.getElementById('tree-scope-control');
+  const treeLimitControl = document.getElementById('tree-limit-control');
+  const previewLoader = document.getElementById('preview-loader');
+  const progressBarTrack = document.getElementById('progress-bar-track');
 
   let currentRoot = null;
   let selectedFiles = new Set();
   let fileTreeData = null;
   let currentTreeMode = 'full'; // 'full' | 'scoped' | 'none'
+  let currentTreeLimit = 2500; // default 2500 items max
   let showAllToggle = false;
   let cachedBaseContext = '';
   let debounceTimer = null;
@@ -26,6 +30,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const gutterResizer = document.getElementById('gutter-resizer');
   const splitControl = document.getElementById('split-control');
   const showAllChk = document.getElementById('show-all-chk');
+
+  if (treeLimitControl) {
+    treeLimitControl.querySelectorAll('.segment').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        treeLimitControl.querySelectorAll('.segment').forEach((s) => s.classList.remove('active'));
+        btn.classList.add('active');
+        currentTreeLimit = parseInt(btn.getAttribute('data-limit') || '2500', 10);
+        scheduleUpdateBaseContext();
+      });
+    });
+  }
 
   if (showAllChk) {
     showAllChk.addEventListener('change', async (e) => {
@@ -346,6 +361,9 @@ document.addEventListener('DOMContentLoaded', () => {
   async function updateBaseContext() {
     if (!currentRoot) return;
 
+    if (previewLoader) previewLoader.style.display = 'inline';
+    if (progressBarTrack) progressBarTrack.style.display = 'block';
+
     try {
       const files = Array.from(selectedFiles);
       const baseContext = await invoke('build_context', {
@@ -354,6 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         query: '',
         treeMode: currentTreeMode,
         showAll: showAllToggle,
+        maxTreeEntries: currentTreeLimit,
       });
 
       cachedBaseContext = baseContext.trim();
@@ -364,6 +383,9 @@ document.addEventListener('DOMContentLoaded', () => {
       cachedBaseContext = `Error generating context: ${e}`;
       previewBase.textContent = cachedBaseContext;
       updateStats();
+    } finally {
+      if (previewLoader) previewLoader.style.display = 'none';
+      if (progressBarTrack) progressBarTrack.style.display = 'none';
     }
   }
 
@@ -406,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       sendBtn.disabled = true;
-      sendBtn.textContent = 'Sending to Lumo...';
+      sendBtn.textContent = 'Sending...';
 
       const prompt = await invoke('build_context', {
         root: currentRoot,
@@ -414,6 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         query: query,
         treeMode: currentTreeMode,
         showAll: showAllToggle,
+        maxTreeEntries: currentTreeLimit,
       });
 
       await invoke('inject_to_lumo', { text: prompt });
@@ -421,13 +444,13 @@ document.addEventListener('DOMContentLoaded', () => {
       sendBtn.textContent = 'Sent! ✓';
       setTimeout(() => {
         sendBtn.disabled = false;
-        sendBtn.textContent = 'Send to Lumo';
+        sendBtn.textContent = '➤ Lumo';
       }, 1200);
     } catch (e) {
       console.error(e);
       alert(`Error injecting to Lumo: ${e}`);
       sendBtn.disabled = false;
-      sendBtn.textContent = 'Send to Lumo';
+      sendBtn.textContent = '➤ Lumo';
     }
   });
 

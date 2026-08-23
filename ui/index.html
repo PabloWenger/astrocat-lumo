@@ -10,7 +10,7 @@
     <div class="container">
       <header>
         <div class="header-left">
-          <img src="logo.png" alt="Astrocat Logo" class="app-logo" />
+          <img src="logo.svg" alt="Astrocat Logo" class="app-logo" />
           <h1>Astrocat Lumo</h1>
           <button id="select-dir-btn">Select Directory</button>
         </div>
@@ -49,17 +49,36 @@
           <div class="panel" id="right-panel">
             <div id="preview-section" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
               <div class="scope-container">
-                <label class="scope-label">Tree Scope:</label>
-                <div class="segmented-control" id="tree-scope-control">
-                  <button class="segment active" data-mode="full">🌳 Full</button>
-                  <button class="segment" data-mode="scoped">🌿 Scoped</button>
-                  <button class="segment" data-mode="none">🚫 None</button>
+                <div class="scope-group">
+                  <label class="scope-label">Tree Scope:</label>
+                  <div class="segmented-control" id="tree-scope-control">
+                    <button class="segment active" data-mode="full">🌳 Full</button>
+                    <button class="segment" data-mode="scoped">🌿 Scoped</button>
+                    <button class="segment" data-mode="none">🚫 None</button>
+                  </div>
+                </div>
+
+                <div class="limit-group" id="limit-group-container">
+                  <label class="scope-label" title="Tope de elementos en el árbol">Tope:</label>
+                  <div class="segmented-control" id="tree-limit-control" title="Límite de elementos listados en el árbol de contexto">
+                    <button class="segment" data-limit="1000">1k</button>
+                    <button class="segment active" data-limit="2500">2.5k</button>
+                    <button class="segment" data-limit="5000">5k</button>
+                    <button class="segment" data-limit="10000">10k</button>
+                    <button class="segment" data-limit="0" title="Sin límite">Max</button>
+                  </div>
                 </div>
               </div>
 
               <div class="preview-header">
                 <h2>Context Preview</h2>
-                <span id="preview-stats" class="stats-text">0 chars</span>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <span id="preview-loader" class="loader-pulse" style="display: none; font-size: 0.72rem; color: #a58aff;">⚡ Generando...</span>
+                  <span id="preview-stats" class="stats-text">0 chars</span>
+                </div>
+              </div>
+              <div id="progress-bar-track" class="progress-track" style="display: none;">
+                <div class="progress-bar-fill"></div>
               </div>
               <div id="context-preview">
                 <pre id="preview-base">Select a directory to inspect repository structure...</pre>
