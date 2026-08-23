@@ -634,3 +634,10 @@ textarea:focus {
 #footer-heart {
   font-size: 1.25em;
 }
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}

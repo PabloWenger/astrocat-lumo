@@ -106,7 +106,7 @@
           
           <!-- Context Preview Panel -->
           <div class="panel" id="right-panel">
-            <div class="panel-header" style="margin-bottom: 0;">
+            <div class="panel-header" style="align-items: center; margin-bottom: 0.5rem;">
               <h2>Context Preview</h2>
               <div class="badge-outline" id="preview-tokens-badge">0 tokens</div>
             </div>
@@ -120,7 +120,7 @@
 
         <!-- Query Panel -->
         <div class="panel" id="query-section">
-          <div class="query-header-text">💬 Query</div>
+          <div class="query-header-text">Query</div>
           <div class="query-capsule">
             <textarea id="query-input" placeholder="¿Cómo conecto combat con movement?"></textarea>
             <div class="query-actions">
@@ -131,7 +131,7 @@
             </div>
           </div>
           <div class="app-footer">
-            created with <span style="color: #ff7e79;">♥</span> by <a href="https://github.com/PabloWenger" target="_blank" rel="noopener noreferrer">m[00]n</a> & <a href="https://astrocatstud.io" target="_blank" rel="noopener noreferrer">astrocatstud.io</a>
+            created with <span id="footer-heart" style="color: #ff7e79; cursor: pointer; display: inline-block;">♥</span> by <a href="https://github.com/PabloWenger" target="_blank" rel="noopener noreferrer">m[00]n</a> & <a href="https://astrocatstud.io" target="_blank" rel="noopener noreferrer">astrocatstud.io</a>
           </div>
         </div>
       </div>
@@ -144,7 +144,6 @@
       <!-- Settings Popover -->
       <div id="settings-popover" class="popover">
         <h3 style="font-size: 0.75rem; color: var(--text-color); margin: 0 0 1rem 0;">CONTEXT SETTINGS</h3>
-        
         <div class="limit-group">
           <label class="scope-label">Tree scope</label>
           <div class="segmented-control" id="tree-scope-control">
