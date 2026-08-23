@@ -10,115 +10,172 @@
     <div class="container">
       <header>
         <div class="header-left">
-          <img src="logo.svg" alt="Astrocat Logo" class="app-logo" />
-          <h1>Astrocat Lumo</h1>
-          <button id="select-dir-btn">Select Directory</button>
-        </div>
-        <div class="header-right">
-          <div class="segmented-control" id="split-control" title="Adjust Window Split (UI / Lumo)">
-            <button class="segment" data-ratio="0.35" title="Compact UI (35%)">◨ 35%</button>
-            <button class="segment active" data-ratio="0.50" title="Balanced 50/50">◫ 50%</button>
-            <button class="segment" data-ratio="0.65" title="Expanded UI (65%)">◧ 65%</button>
-            <button class="segment" data-ratio="0.80" title="Focus UI (80%)">█ 80%</button>
+          <div class="header-top">
+            <img src="logo.svg" alt="Astrocat Logo" class="app-logo" />
+            <h1>Astrocat Lumo</h1>
+            <button id="select-dir-btn" class="btn-select-dir">Select Directory</button>
           </div>
+          <div id="repo-path">No repository selected</div>
         </div>
       </header>
-      
-      <div id="repo-path">No repository selected</div>
-
-      <div class="global-toolbar" style="display: flex; flex-wrap: wrap; gap: 1rem; padding: 0.5rem 1rem; background: var(--bg-panel); border-bottom: 1px solid var(--border-color); align-items: center; justify-content: space-between;">
-        
-        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-          <button id="refresh-tree-btn" class="btn-sm btn-ghost" title="Refresh files tree">🔄</button>
-          <button id="select-siblings-btn" class="btn-sm" title="Select all sibling files in same folders">+ Siblings</button>
-          <button id="clear-selection-btn" class="btn-sm btn-ghost" title="Uncheck selected files">◻️ Uncheck</button>
-          <button id="clear-tree-btn" class="btn-sm btn-ghost" title="Clear and unload file tree">✕ Clear</button>
-          <label style="font-size: 0.75rem; color: #888; display: flex; align-items: center; gap: 0.2rem; cursor: pointer; margin-left: 0.5rem;">
-            <input type="checkbox" id="show-all-chk"> All Files
-          </label>
-        </div>
-
-        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;">
-          <div class="limit-group" style="margin: 0; padding: 0;">
-            <label class="scope-label" title="Tope de elementos en el árbol">Tree Max:</label>
-            <div class="segmented-control" id="tree-limit-control" title="Límite de elementos listados en el árbol de contexto">
-              <button class="segment" data-limit="1000">1k</button>
-              <button class="segment active" data-limit="2500">2.5k</button>
-              <button class="segment" data-limit="5000">5k</button>
-              <button class="segment" data-limit="10000">10k</button>
-              <button class="segment danger-segment" data-limit="0" title="Sin límite (volcar todo)">∞ Max</button>
-            </div>
-          </div>
-          
-          <div class="limit-group" style="margin: 0; padding: 0;">
-            <label class="scope-label">Tree Scope:</label>
-            <div class="segmented-control" id="tree-scope-control">
-              <button class="segment active" data-mode="full">🌳 Full</button>
-              <button class="segment" data-mode="scoped">🌿 Scoped</button>
-              <button class="segment" data-mode="none">🚫 None</button>
-            </div>
-          </div>
-
-          <div class="limit-group" id="prompt-limit-container" style="margin: 0; padding: 0;">
-            <label class="scope-label" title="Límite máximo de caracteres en el prompt total">Prompt Max:</label>
-            <div class="segmented-control" id="prompt-limit-control" title="Límite de caracteres enviados a Lumo">
-              <button class="segment active" data-chars="60000" title="Estándar seguro (60k chars)">60k</button>
-              <button class="segment" data-chars="150000" title="Alto (150k chars)">150k</button>
-              <button class="segment" data-chars="300000" title="Extremo (300k chars)">300k</button>
-              <button class="segment danger-segment" data-chars="0" title="Sin límite (bajo propio riesgo)">🔓 ∞</button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div class="main-content">
-        <div class="top-section">
-          <div class="panel" id="left-panel">
-            <div class="panel-header">
-              <h2>Files <span id="selection-count" class="badge">0</span></h2>
-            </div>
-            <div id="file-tree" style="margin-top: 0.5rem;"></div>
+        <!-- Context Card -->
+        <div class="panel" id="context-panel">
+          <div class="context-title">
+            <h2>Context</h2>
+            <div class="header-desc">Define qué entra al contexto y cuánto puede procesar Lumo.</div>
           </div>
-          
-          <div class="panel" id="right-panel">
-            <div id="preview-section" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
-              <div class="preview-header">
-                <h2>Context Preview</h2>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <span id="preview-loader" class="loader-pulse" style="display: none; font-size: 0.72rem; color: #a58aff;">⚡ Generando...</span>
-                  <span id="preview-stats" class="stats-text">0 chars</span>
+          <div class="context-info">
+            <div class="context-summary-pills">
+              <div class="context-summary-item">
+                <span class="pill-label">Scope</span>
+                <div class="pill">
+                  <span id="pill-scope">Full</span>
                 </div>
               </div>
-              <div id="progress-bar-track" class="progress-track" style="display: none;">
-                <div class="progress-bar-fill"></div>
+              <div class="context-summary-item">
+                <span class="pill-label">Tree limit</span>
+                <div class="pill">
+                  <span id="pill-tree-limit">2.5k</span>
+                </div>
               </div>
-              <div id="context-preview">
-                <pre id="preview-base">Select a directory to inspect repository structure...</pre>
-                <pre id="preview-query"></pre>
+              <div class="context-summary-item">
+                <span class="pill-label">Prompt budget</span>
+                <div class="pill">
+                  <span id="pill-prompt-limit">60k</span>
+                </div>
               </div>
+            </div>
+            <button id="settings-btn" class="icon-btn" title="Context Settings">⚙</button>
+          </div>
+        </div>
+
+        <div class="top-section">
+          <!-- Files Panel -->
+          <div class="panel" id="left-panel">
+            <div class="panel-header">
+              <div>
+                <h2>Files <span class="badge" id="selection-count-header">0 / 0</span></h2>
+                <div class="header-desc">Selecciona los archivos que quieres incluir en el contexto.</div>
+              </div>
+              <div style="position: relative;">
+                <button id="files-menu-btn" class="icon-btn" style="border: none;">⋮</button>
+                <div id="files-dropdown" class="dropdown-menu" style="right: 0; top: 100%;">
+                  <button id="refresh-tree-btn" class="dropdown-item">↻ Refresh</button>
+                  <button id="select-all-btn" class="dropdown-item">☑ Select all</button>
+                  <button id="clear-selection-btn" class="dropdown-item danger">🗑 Clear selection</button>
+                  <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+                  <button id="select-siblings-btn" class="dropdown-item">➕ Include siblings</button>
+                  <label class="dropdown-item" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="show-all-chk"> All Files
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div id="file-tree"></div>
+            
+            <div class="token-footer">
+              <div class="token-stats">
+                <div class="stat-item">
+                  <span class="stat-val" id="footer-files">0 files</span>
+                  <span class="stat-lbl">seleccionados</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-val" id="footer-tokens">0 tokens</span>
+                  <span class="stat-lbl">estimados</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-val" id="footer-budget">60k tokens</span>
+                  <span class="stat-lbl">presupuesto</span>
+                </div>
+                <div class="stat-item" style="align-items: flex-end;">
+                  <span class="badge-outline" id="footer-pct">0% usado</span>
+                </div>
+              </div>
+              <div class="progress-track">
+                <div class="progress-bar-fill" id="footer-progress" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="vertical-resizer" title="Drag to resize panels">
+            <div class="resizer-knob"></div>
+          </div>
+          
+          <!-- Context Preview Panel -->
+          <div class="panel" id="right-panel">
+            <div class="panel-header" style="margin-bottom: 0;">
+              <h2>Context Preview</h2>
+              <div class="badge-outline" id="preview-tokens-badge">0 tokens</div>
+            </div>
+            
+            <div id="context-preview">
+              <pre id="preview-base">Select a directory to inspect repository structure...</pre>
+              <pre id="preview-query"></pre>
             </div>
           </div>
         </div>
 
-        <div id="horizontal-resizer" title="Drag to resize query area">
-          <div class="h-resizer-knob"></div>
-        </div>
-
-        <div class="panel" id="query-section" style="height: 200px; flex-shrink: 0; min-height: 100px; display: flex; flex-direction: column;">
-          <div class="query-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-            <h2>Query</h2>
-            <button id="send-btn" class="btn-sm" disabled title="Send to Lumo">➤ Lumo</button>
+        <!-- Query Panel -->
+        <div class="panel" id="query-section">
+          <div class="query-header-text">💬 Query</div>
+          <div class="query-capsule">
+            <textarea id="query-input" placeholder="¿Cómo conecto combat con movement?"></textarea>
+            <div class="query-actions">
+              <div class="query-actions-left">
+                <!-- Removed non-functional buttons -->
+              </div>
+              <button id="send-btn" class="btn-primary" disabled>➤ Lumo</button>
+            </div>
           </div>
-          <textarea id="query-input" placeholder="¿Cómo conecto combat con movement?" style="flex: 1; min-height: 50px;"></textarea>
-          <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-            <button id="send-btn-lower" class="btn-sm" disabled title="Send to Lumo">➤ Lumo</button>
+          <div class="app-footer">
+            created with <span style="color: #ff7e79;">♥</span> by <a href="https://github.com/PabloWenger" target="_blank" rel="noopener noreferrer">m[00]n</a> & <a href="https://astrocatstud.io" target="_blank" rel="noopener noreferrer">astrocatstud.io</a>
           </div>
         </div>
       </div>
-      <!-- Draggable Splitter Gutter -->
+      
+      <!-- Draggable Splitter Gutter for WebView -->
       <div id="gutter-resizer" title="Drag with mouse to resize UI / Lumo panels">
         <div class="resizer-knob"></div>
       </div>
+      
+      <!-- Settings Popover -->
+      <div id="settings-popover" class="popover">
+        <h3 style="font-size: 0.75rem; color: var(--text-color); margin: 0 0 1rem 0;">CONTEXT SETTINGS</h3>
+        
+        <div class="limit-group">
+          <label class="scope-label">Tree scope</label>
+          <div class="segmented-control" id="tree-scope-control">
+            <button class="segment active" data-mode="full">Full</button>
+            <button class="segment" data-mode="scoped">Scoped</button>
+            <button class="segment" data-mode="none">None</button>
+          </div>
+        </div>
+
+        <div class="limit-group">
+          <label class="scope-label">Tree limit</label>
+          <div class="segmented-control" id="tree-limit-control">
+            <button class="segment" data-limit="1000">1k</button>
+            <button class="segment active" data-limit="2500">2.5k</button>
+            <button class="segment" data-limit="5000">5k</button>
+            <button class="segment" data-limit="10000">10k</button>
+            <button class="segment danger-segment" data-limit="0">Max</button>
+          </div>
+        </div>
+        
+        <div class="limit-group" style="margin-bottom: 0;">
+          <label class="scope-label">Prompt budget</label>
+          <div class="segmented-control" id="prompt-limit-control">
+            <button class="segment active" data-chars="60000">60k</button>
+            <button class="segment" data-chars="150000">150k</button>
+            <button class="segment" data-chars="300000">300k</button>
+            <button class="segment danger-segment" data-chars="0">∞</button>
+          </div>
+        </div>
+      </div>
+      
     </div>
     
     <!-- Using Tauri API injected script -->

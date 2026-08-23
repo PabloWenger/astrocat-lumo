@@ -1,38 +1,96 @@
 document.addEventListener('DOMContentLoaded', () => {
   const selectDirBtn = document.getElementById('select-dir-btn');
   const sendBtn = document.getElementById('send-btn');
-  const sendBtnLower = document.getElementById('send-btn-lower');
   const repoPathEl = document.getElementById('repo-path');
   const fileTreeEl = document.getElementById('file-tree');
   const queryInput = document.getElementById('query-input');
+  
   const previewBase = document.getElementById('preview-base');
   const previewQuery = document.getElementById('preview-query');
-  const previewStats = document.getElementById('preview-stats');
-  const selectionCountEl = document.getElementById('selection-count');
+  const previewTokensBadge = document.getElementById('preview-tokens-badge');
+  
+  const selectionCountHeader = document.getElementById('selection-count-header');
+  
+  // Footer stats
+  const footerFiles = document.getElementById('footer-files');
+  const footerTokens = document.getElementById('footer-tokens');
+  const footerBudget = document.getElementById('footer-budget');
+  const footerPct = document.getElementById('footer-pct');
+  const footerProgress = document.getElementById('footer-progress');
+  
+  // Menus and popovers
+  const settingsBtn = document.getElementById('settings-btn');
+  const settingsPopover = document.getElementById('settings-popover');
+  const filesMenuBtn = document.getElementById('files-menu-btn');
+  const filesDropdown = document.getElementById('files-dropdown');
+  
+  // Actions
   const refreshTreeBtn = document.getElementById('refresh-tree-btn');
-  const selectSiblingsBtn = document.getElementById('select-siblings-btn');
+  const selectAllBtn = document.getElementById('select-all-btn');
   const clearSelectionBtn = document.getElementById('clear-selection-btn');
-  const clearTreeBtn = document.getElementById('clear-tree-btn');
+  const selectSiblingsBtn = document.getElementById('select-siblings-btn');
+  const showAllChk = document.getElementById('show-all-chk');
+
+  // Settings Controls
   const treeScopeControl = document.getElementById('tree-scope-control');
   const treeLimitControl = document.getElementById('tree-limit-control');
   const promptLimitControl = document.getElementById('prompt-limit-control');
-  const previewLoader = document.getElementById('preview-loader');
-  const progressBarTrack = document.getElementById('progress-bar-track');
+  
+  const pillTreeLimit = document.getElementById('pill-tree-limit');
+  const pillPromptLimit = document.getElementById('pill-prompt-limit');
 
   let currentRoot = null;
   let selectedFiles = new Set();
   let fileTreeData = null;
   let currentTreeMode = 'full'; // 'full' | 'scoped' | 'none'
-  let currentTreeLimit = 2500; // default 2500 items max
-  let currentPromptLimit = 60000; // default 60k chars max
+  let currentTreeLimit = 2500; 
+  let currentPromptLimit = 60000; 
   let showAllToggle = false;
   let cachedBaseContext = '';
   let debounceTimer = null;
-  let statsTimer = null;
+  let allFilePaths = []; // Track all files for "Select all"
 
-  const gutterResizer = document.getElementById('gutter-resizer');
-  const splitControl = document.getElementById('split-control');
-  const showAllChk = document.getElementById('show-all-chk');
+  // Dropdown toggles
+  settingsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    settingsPopover.classList.toggle('open');
+    filesDropdown.classList.remove('open');
+    // Position it under the button
+    const rect = settingsBtn.getBoundingClientRect();
+    settingsPopover.style.top = `${rect.bottom + 8}px`;
+    settingsPopover.style.right = `${window.innerWidth - rect.right}px`;
+  });
+
+  filesMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    filesDropdown.classList.toggle('open');
+    settingsPopover.classList.remove('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!settingsPopover.contains(e.target) && e.target !== settingsBtn) {
+      settingsPopover.classList.remove('open');
+    }
+    if (!filesDropdown.contains(e.target) && e.target !== filesMenuBtn) {
+      filesDropdown.classList.remove('open');
+    }
+  });
+
+  // Settings Logic
+  if (treeScopeControl) {
+    treeScopeControl.querySelectorAll('.segment').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        treeScopeControl.querySelectorAll('.segment').forEach((s) => s.classList.remove('active'));
+        btn.classList.add('active');
+        currentTreeMode = btn.getAttribute('data-mode') || 'full';
+        
+        const pillScope = document.getElementById('pill-scope');
+        if (pillScope) pillScope.textContent = btn.textContent;
+        updateStats();
+        scheduleUpdateBaseContext();
+      });
+    });
+  }
 
   if (treeLimitControl) {
     treeLimitControl.querySelectorAll('.segment').forEach((btn) => {
@@ -40,6 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
         treeLimitControl.querySelectorAll('.segment').forEach((s) => s.classList.remove('active'));
         btn.classList.add('active');
         currentTreeLimit = parseInt(btn.getAttribute('data-limit') || '2500', 10);
+        pillTreeLimit.textContent = btn.textContent;
+        updateStats();
         scheduleUpdateBaseContext();
       });
     });
@@ -51,6 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
         promptLimitControl.querySelectorAll('.segment').forEach((s) => s.classList.remove('active'));
         btn.classList.add('active');
         currentPromptLimit = parseInt(btn.getAttribute('data-chars') || '60000', 10);
+        pillPromptLimit.textContent = btn.textContent;
+        updateStats();
         scheduleUpdateBaseContext();
       });
     });
@@ -60,113 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showAllChk.addEventListener('change', async (e) => {
       showAllToggle = e.target.checked;
       if (currentRoot) {
-        await loadFileTree(currentRoot, true); // reload tree, preserving selection
+        await loadFileTree(currentRoot, true);
       }
-    });
-  }
-
-  function updateActiveSplitPreset(ratio) {
-    if (!splitControl) return;
-    let matched = false;
-    splitControl.querySelectorAll('.segment').forEach((btn) => {
-      const targetRatio = parseFloat(btn.getAttribute('data-ratio') || '0.5');
-      if (Math.abs(targetRatio - ratio) < 0.03) {
-        btn.classList.add('active');
-        matched = true;
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-    if (!matched) {
-      splitControl.querySelectorAll('.segment').forEach((btn) => btn.classList.remove('active'));
-    }
-  }
-
-  // Interactive Draggable Splitter Gutter
-  if (gutterResizer) {
-    let isDragging = false;
-    let lastScreenX = 0;
-    let accumulatedDeltaX = 0;
-    let dragRafId = null;
-
-    function scheduleDrag(deltaX) {
-      accumulatedDeltaX += deltaX;
-      if (dragRafId === null) {
-        dragRafId = requestAnimationFrame(async () => {
-          const delta = accumulatedDeltaX;
-          accumulatedDeltaX = 0;
-          dragRafId = null;
-          try {
-            const newRatio = await invoke('drag_split_delta', { deltaPx: delta });
-            updateActiveSplitPreset(newRatio);
-          } catch (err) {
-            console.error('Error during drag split:', err);
-          }
-        });
-      }
-    }
-
-    gutterResizer.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      try {
-        gutterResizer.setPointerCapture(e.pointerId);
-      } catch (_) {}
-      isDragging = true;
-      lastScreenX = e.screenX;
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'col-resize';
-      gutterResizer.classList.add('dragging');
-    });
-
-    gutterResizer.addEventListener('pointermove', (e) => {
-      if (!isDragging) return;
-      const deltaX = e.screenX - lastScreenX;
-      lastScreenX = e.screenX;
-      if (deltaX !== 0) {
-        scheduleDrag(deltaX);
-      }
-    });
-
-    function endDrag(e) {
-      if (!isDragging) return;
-      isDragging = false;
-      try {
-        gutterResizer.releasePointerCapture(e.pointerId);
-      } catch (_) {}
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-      gutterResizer.classList.remove('dragging');
-    }
-
-    gutterResizer.addEventListener('pointerup', endDrag);
-    gutterResizer.addEventListener('pointercancel', endDrag);
-  }
-
-  // Split View Controls
-  if (splitControl) {
-    splitControl.querySelectorAll('.segment').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        splitControl.querySelectorAll('.segment').forEach((s) => s.classList.remove('active'));
-        btn.classList.add('active');
-        const ratio = parseFloat(btn.getAttribute('data-ratio') || '0.5');
-        try {
-          await invoke('set_split_ratio', { ratio });
-        } catch (e) {
-          console.error('Error setting split ratio:', e);
-        }
-      });
-    });
-  }
-
-  // Tree Scope Selector (Segmented buttons)
-  if (treeScopeControl) {
-    treeScopeControl.querySelectorAll('.segment').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        treeScopeControl.querySelectorAll('.segment').forEach((s) => s.classList.remove('active'));
-        btn.classList.add('active');
-        currentTreeMode = btn.getAttribute('data-mode') || 'full';
-        scheduleUpdateBaseContext();
-      });
     });
   }
 
@@ -176,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const path = await invoke('select_directory');
       if (path) {
         currentRoot = path;
-        repoPathEl.textContent = `Repo: ${path}`;
+        repoPathEl.textContent = `${path}`;
         await loadFileTree(path);
       }
     } catch (e) {
@@ -187,70 +144,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Refresh Tree
+  // File Actions
   if (refreshTreeBtn) {
     refreshTreeBtn.addEventListener('click', async () => {
       if (!currentRoot) return;
-      refreshTreeBtn.style.transform = 'rotate(180deg)';
-      refreshTreeBtn.style.transition = 'transform 0.3s ease';
-      try {
-        await loadFileTree(currentRoot, true);
-      } finally {
-        setTimeout(() => {
-          refreshTreeBtn.style.transform = '';
-          refreshTreeBtn.style.transition = '';
-        }, 300);
-      }
+      filesDropdown.classList.remove('open');
+      await loadFileTree(currentRoot, true);
     });
   }
 
-  // Clear Selection
-  clearSelectionBtn.addEventListener('click', () => {
-    selectedFiles.clear();
-    fileTreeEl.querySelectorAll('input[type="checkbox"]').forEach((chk) => {
-      chk.checked = false;
-    });
-    updateSelectionBadge();
-    scheduleUpdateBaseContext();
-  });
-
-  // Clear / Unload Tree (Close repository)
-  if (clearTreeBtn) {
-    clearTreeBtn.addEventListener('click', () => {
-      currentRoot = null;
-      selectedFiles.clear();
-      fileTreeData = null;
-      repoPathEl.textContent = 'No repository selected';
-      fileTreeEl.innerHTML = '';
-      cachedBaseContext = '';
-      previewBase.textContent = 'Select a directory to inspect repository structure...';
+  if (selectAllBtn) {
+    selectAllBtn.addEventListener('click', () => {
+      if (!currentRoot) return;
+      filesDropdown.classList.remove('open');
+      allFilePaths.forEach(p => selectedFiles.add(p));
+      fileTreeEl.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = true);
       updateSelectionBadge();
-      updateStats();
+      scheduleUpdateBaseContext();
     });
   }
 
-  // Select Siblings
-  selectSiblingsBtn.addEventListener('click', async () => {
-    if (selectedFiles.size === 0) return;
-    try {
-      const files = Array.from(selectedFiles);
-      const siblings = await invoke('get_sibling_files', { files });
-      if (Array.isArray(siblings)) {
-        siblings.forEach((path) => {
-          selectedFiles.add(path);
-          const chk = document.getElementById(`chk-${path}`);
-          if (chk) chk.checked = true;
-        });
-        updateSelectionBadge();
-        scheduleUpdateBaseContext();
+  if (clearSelectionBtn) {
+    clearSelectionBtn.addEventListener('click', () => {
+      filesDropdown.classList.remove('open');
+      selectedFiles.clear();
+      fileTreeEl.querySelectorAll('input[type="checkbox"]').forEach(chk => chk.checked = false);
+      updateSelectionBadge();
+      scheduleUpdateBaseContext();
+    });
+  }
+
+  if (selectSiblingsBtn) {
+    selectSiblingsBtn.addEventListener('click', async () => {
+      filesDropdown.classList.remove('open');
+      if (selectedFiles.size === 0) return;
+      try {
+        const files = Array.from(selectedFiles);
+        const siblings = await invoke('get_sibling_files', { files });
+        if (Array.isArray(siblings)) {
+          siblings.forEach((path) => {
+            selectedFiles.add(path);
+            const chk = document.getElementById(`chk-${path}`);
+            if (chk) chk.checked = true;
+          });
+          updateSelectionBadge();
+          scheduleUpdateBaseContext();
+        }
+      } catch (e) {
+        console.error('Error fetching sibling files:', e);
       }
-    } catch (e) {
-      console.error('Error fetching sibling files:', e);
-    }
-  });
+    });
+  }
 
   function updateSelectionBadge() {
-    selectionCountEl.textContent = selectedFiles.size;
+    const total = allFilePaths.length;
+    selectionCountHeader.textContent = `${selectedFiles.size} / ${total}`;
+    footerFiles.textContent = `${selectedFiles.size} files`;
   }
 
   async function loadFileTree(rootPath, preserveSelection = false) {
@@ -258,14 +207,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!preserveSelection) {
         selectedFiles.clear();
       }
-      updateSelectionBadge();
-      fileTreeEl.innerHTML = '<div style="color: #888; padding: 0.5rem;">Cargando archivos...</div>';
-
+      
+      fileTreeEl.innerHTML = '<div style="color: var(--text-dim); padding: 0.5rem;">Cargando archivos...</div>';
       const entries = await invoke('read_directory', { path: rootPath, showAll: showAllToggle });
       fileTreeEl.innerHTML = '';
+      
+      allFilePaths = [];
+      collectAllFiles(entries, allFilePaths);
+
+      updateSelectionBadge();
 
       if (!entries || entries.length === 0) {
-        fileTreeEl.innerHTML = '<div style="color: #888; padding: 0.5rem; font-style: italic;">Carpeta vacía</div>';
+        fileTreeEl.innerHTML = '<div style="color: var(--text-dim); padding: 0.5rem; font-style: italic;">Carpeta vacía</div>';
       } else {
         renderDirectoryLevel(entries, fileTreeEl, 0);
       }
@@ -274,6 +227,15 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       console.error(e);
       fileTreeEl.innerHTML = `<span style="color: #ff5555; padding: 0.5rem;">Error: ${e}</span>`;
+    }
+  }
+  
+  function collectAllFiles(entries, outArray) {
+    if (!entries) return;
+    for (const e of entries) {
+      if (!e.is_dir) {
+        outArray.push(e.path);
+      }
     }
   }
 
@@ -315,14 +277,16 @@ document.addEventListener('DOMContentLoaded', () => {
             arrow.classList.add('open');
             childrenContainer.classList.add('open');
             if (!loaded) {
-              childrenContainer.innerHTML = `<div style="padding-left: ${(depth + 1) * 14}px; color: #888; font-size: 0.75rem;">Cargando...</div>`;
+              childrenContainer.innerHTML = `<div style="padding-left: ${(depth + 1) * 14}px; color: var(--text-dim); font-size: 0.75rem;">Cargando...</div>`;
               try {
                 const subEntries = await invoke('read_directory', { path: entry.path, showAll: showAllToggle });
                 childrenContainer.innerHTML = '';
                 if (!subEntries || subEntries.length === 0) {
-                  childrenContainer.innerHTML = `<div style="padding-left: ${(depth + 1) * 14}px; color: #666; font-size: 0.75rem; font-style: italic;">(vacío)</div>`;
+                  childrenContainer.innerHTML = `<div style="padding-left: ${(depth + 1) * 14}px; color: var(--text-dim); font-size: 0.75rem; font-style: italic;">(vacío)</div>`;
                 } else {
+                  collectAllFiles(subEntries, allFilePaths); // dynamically add to all files if not pre-cached
                   renderDirectoryLevel(subEntries, childrenContainer, depth + 1);
+                  updateSelectionBadge();
                 }
                 loaded = true;
               } catch (err) {
@@ -364,7 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Debounced IPC call for base context (tree + files)
   function scheduleUpdateBaseContext() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
@@ -374,10 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function updateBaseContext() {
     if (!currentRoot) return;
-
-    if (previewLoader) previewLoader.style.display = 'inline';
-    if (progressBarTrack) progressBarTrack.style.display = 'block';
-
     try {
       const files = Array.from(selectedFiles);
       const baseContext = await invoke('build_context', {
@@ -398,26 +357,56 @@ document.addEventListener('DOMContentLoaded', () => {
       cachedBaseContext = `Error generating context: ${e}`;
       previewBase.textContent = cachedBaseContext;
       updateStats();
-    } finally {
-      if (previewLoader) previewLoader.style.display = 'none';
-      if (progressBarTrack) progressBarTrack.style.display = 'none';
     }
+  }
+
+  function formatK(num) {
+    if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return num.toString();
   }
 
   function updateStats() {
     const query = queryInput.value.trim();
+    // Use bytes / 4 for tokens heuristic 
     const totalChars = (cachedBaseContext ? cachedBaseContext.length : 0) + (query ? query.length + 20 : 0);
-    const approxTokens = Math.round(totalChars / 3.8);
-    previewStats.textContent = `${totalChars.toLocaleString()} chars (~${approxTokens.toLocaleString()} tokens)`;
+    const approxTokens = Math.ceil(totalChars / 4); 
+    
+    // Budget
+    let budgetTokens = 0;
+    if (currentPromptLimit > 0) {
+      budgetTokens = Math.ceil(currentPromptLimit / 4);
+      footerBudget.textContent = `${formatK(budgetTokens)} tokens`;
+    } else {
+      footerBudget.textContent = `∞ tokens`;
+    }
+
+    footerTokens.textContent = `${formatK(approxTokens)} tokens`;
+    previewTokensBadge.textContent = `${formatK(approxTokens)} tokens`;
+    previewTokensBadge.title = `estimated tokens for selected files`;
+
+    // Progress bar
+    if (budgetTokens > 0) {
+      let pct = Math.min(100, Math.round((approxTokens / budgetTokens) * 100));
+      footerPct.textContent = `${pct}% usado`;
+      footerProgress.style.width = `${pct}%`;
+      
+      footerProgress.classList.remove('warning', 'danger');
+      if (pct >= 90) {
+        footerProgress.classList.add('danger');
+      } else if (pct >= 71) {
+        footerProgress.classList.add('warning');
+      }
+    } else {
+      footerPct.textContent = `0% usado`;
+      footerProgress.style.width = `0%`;
+      footerProgress.classList.remove('warning', 'danger');
+    }
+
     sendBtn.disabled = !currentRoot || (!query && selectedFiles.size === 0 && currentTreeMode === 'none');
-    sendBtnLower.disabled = sendBtn.disabled;
   }
 
   let queryDebounceTimer = null;
-
   queryInput.addEventListener('input', () => {
-    // Debounce all DOM updates related to the query to avoid layout thrashing
-    // while the user is typing, as the preview area can be massive.
     clearTimeout(queryDebounceTimer);
     queryDebounceTimer = setTimeout(() => {
       const query = queryInput.value.trim();
@@ -432,21 +421,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 300);
   });
 
-  // Send to Lumo
   const handleSend = async () => {
     if (!currentRoot) return;
-
     const query = queryInput.value.trim();
     if (!query && selectedFiles.size === 0 && currentTreeMode === 'none') {
       alert('Please enter a query or select files to send.');
       return;
     }
-
     try {
       sendBtn.disabled = true;
-      sendBtnLower.disabled = true;
       sendBtn.textContent = 'Sending...';
-      sendBtnLower.textContent = 'Sending...';
 
       const prompt = await invoke('build_context', {
         root: currentRoot,
@@ -461,74 +445,109 @@ document.addEventListener('DOMContentLoaded', () => {
       await invoke('inject_to_lumo', { text: prompt });
 
       sendBtn.textContent = 'Sent! ✓';
-      sendBtnLower.textContent = 'Sent! ✓';
       setTimeout(() => {
         sendBtn.disabled = false;
-        sendBtnLower.disabled = false;
         sendBtn.textContent = '➤ Lumo';
-        sendBtnLower.textContent = '➤ Lumo';
       }, 1200);
     } catch (e) {
       console.error(e);
       alert(`Error injecting to Lumo: ${e}`);
       sendBtn.disabled = false;
-      sendBtnLower.disabled = false;
       sendBtn.textContent = '➤ Lumo';
-      sendBtnLower.textContent = '➤ Lumo';
     }
   };
-
   sendBtn.addEventListener('click', handleSend);
-  sendBtnLower.addEventListener('click', handleSend);
 
-  // Vertical Resizer for Top Section / Query Section
-  const horizontalResizer = document.getElementById('horizontal-resizer');
-  const querySection = document.getElementById('query-section');
-  const mainContent = document.querySelector('.main-content');
+  // Gutter resizer
+  const gutterResizer = document.getElementById('gutter-resizer');
+  if (gutterResizer) {
+    let isDragging = false;
+    let lastScreenX = 0;
+    let accumulatedDeltaX = 0;
+    let dragRafId = null;
 
-  if (horizontalResizer && querySection && mainContent) {
-    let isHDragging = false;
-    let lastScreenY = 0;
+    function scheduleDrag(deltaX) {
+      accumulatedDeltaX += deltaX;
+      if (dragRafId === null) {
+        dragRafId = requestAnimationFrame(async () => {
+          const delta = accumulatedDeltaX;
+          accumulatedDeltaX = 0;
+          dragRafId = null;
+          try {
+            await invoke('drag_split_delta', { deltaPx: delta });
+          } catch (err) {
+            console.error('Error during drag split:', err);
+          }
+        });
+      }
+    }
 
-    horizontalResizer.addEventListener('pointerdown', (e) => {
+    gutterResizer.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      try { horizontalResizer.setPointerCapture(e.pointerId); } catch (_) {}
-      isHDragging = true;
-      lastScreenY = e.screenY;
+      try { gutterResizer.setPointerCapture(e.pointerId); } catch (_) {}
+      isDragging = true;
+      lastScreenX = e.screenX;
       document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'row-resize';
-      horizontalResizer.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      gutterResizer.classList.add('dragging');
     });
 
-    horizontalResizer.addEventListener('pointermove', (e) => {
-      if (!isHDragging) return;
-      const deltaY = e.screenY - lastScreenY;
-      lastScreenY = e.screenY;
-      if (deltaY !== 0) {
-        // We drag DOWN -> deltaY is positive -> query section gets SMALLER
-        // We drag UP -> deltaY is negative -> query section gets LARGER
-        const currentHeight = querySection.getBoundingClientRect().height;
-        const newHeight = currentHeight - deltaY;
-        
-        // constrain height
-        const minHeight = 100;
-        const maxHeight = mainContent.getBoundingClientRect().height - 150; 
-        if (newHeight >= minHeight && newHeight <= maxHeight) {
-          querySection.style.height = `${newHeight}px`;
-        }
+    gutterResizer.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const deltaX = e.screenX - lastScreenX;
+      lastScreenX = e.screenX;
+      if (deltaX !== 0) scheduleDrag(deltaX);
+    });
+
+    function endDrag(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      try { gutterResizer.releasePointerCapture(e.pointerId); } catch (_) {}
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      gutterResizer.classList.remove('dragging');
+    }
+
+    gutterResizer.addEventListener('pointerup', endDrag);
+    gutterResizer.addEventListener('pointercancel', endDrag);
+  }
+
+  // Vertical Resizer (Left Panel / Right Panel)
+  const verticalResizer = document.getElementById('vertical-resizer');
+  const leftPanel = document.getElementById('left-panel');
+  if (verticalResizer && leftPanel) {
+    let isVDragging = false;
+    let lastScreenX = 0;
+
+    verticalResizer.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      try { verticalResizer.setPointerCapture(e.pointerId); } catch (_) {}
+      isVDragging = true;
+      lastScreenX = e.screenX;
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+    });
+
+    verticalResizer.addEventListener('pointermove', (e) => {
+      if (!isVDragging) return;
+      const deltaX = e.screenX - lastScreenX;
+      lastScreenX = e.screenX;
+      if (deltaX !== 0) {
+        const currentWidth = leftPanel.getBoundingClientRect().width;
+        leftPanel.style.flex = 'none';
+        leftPanel.style.width = `${Math.max(150, currentWidth + deltaX)}px`;
       }
     });
 
-    function endHDrag(e) {
-      if (!isHDragging) return;
-      isHDragging = false;
-      try { horizontalResizer.releasePointerCapture(e.pointerId); } catch (_) {}
+    function endVDrag(e) {
+      if (!isVDragging) return;
+      isVDragging = false;
+      try { verticalResizer.releasePointerCapture(e.pointerId); } catch (_) {}
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
-      horizontalResizer.classList.remove('dragging');
     }
 
-    horizontalResizer.addEventListener('pointerup', endHDrag);
-    horizontalResizer.addEventListener('pointercancel', endHDrag);
+    verticalResizer.addEventListener('pointerup', endVDrag);
+    verticalResizer.addEventListener('pointercancel', endVDrag);
   }
 });
