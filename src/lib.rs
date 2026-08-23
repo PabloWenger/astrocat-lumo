@@ -59,6 +59,18 @@ pub fn run() {
             let app_handle = app.handle().clone();
             let lumo_url = tauri::WebviewUrl::External("https://lumo.proton.me".parse().unwrap());
             let lumo_webview = tauri::webview::WebviewBuilder::new("lumo", lumo_url)
+                .initialization_script(r#"
+                    window.open = function(url) { 
+                        window.location.href = url; 
+                        return window; 
+                    };
+                    document.addEventListener('click', function(e) {
+                        let target = e.target.closest('a');
+                        if (target && target.getAttribute('target') === '_blank') {
+                            target.setAttribute('target', '_self');
+                        }
+                    });
+                "#)
                 .on_new_window(move |url, _| {
                     if let Some(lumo) = app_handle.get_webview("lumo") {
                         let _ = lumo.navigate(url);

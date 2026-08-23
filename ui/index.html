@@ -29,30 +29,32 @@
       <div class="main-content">
         <div class="top-section">
           <div class="panel" id="left-panel">
-            <div class="panel-header">
-              <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: space-between; width: 100%;">
+            <div class="panel-header" style="flex-direction: column; align-items: stretch; gap: 0.5rem; padding-bottom: 0.5rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                   <h2>Files <span id="selection-count" class="badge">0</span></h2>
                   <label style="font-size: 0.75rem; color: #888; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
                     <input type="checkbox" id="show-all-chk"> All Files
                   </label>
                 </div>
-                <div class="panel-actions">
-                  <button id="refresh-tree-btn" class="btn-sm btn-ghost" title="Refresh files tree">🔄</button>
-                  <button id="select-siblings-btn" class="btn-sm" title="Select all sibling files in same folders">+ Siblings</button>
-                  <button id="clear-selection-btn" class="btn-sm btn-ghost" title="Uncheck selected files">Uncheck</button>
-                  <button id="clear-tree-btn" class="btn-sm btn-ghost" title="Clear and unload file tree">✕ Clear Tree</button>
-                </div>
               </div>
-              <div class="limit-group" id="limit-group-container" style="margin-top: 0.8rem; justify-content: flex-start;">
+              
+              <div class="limit-group" id="limit-group-container" style="margin: 0;">
                 <label class="scope-label" title="Tope de elementos en el árbol">Tree Max:</label>
-                <div class="segmented-control" id="tree-limit-control" title="Límite de elementos listados en el árbol de contexto">
+                <div class="segmented-control" id="tree-limit-control" title="Límite de elementos listados en el árbol de contexto" style="flex: 1;">
                   <button class="segment" data-limit="1000">1k</button>
                   <button class="segment active" data-limit="2500">2.5k</button>
                   <button class="segment" data-limit="5000">5k</button>
                   <button class="segment" data-limit="10000">10k</button>
                   <button class="segment danger-segment" data-limit="0" title="Sin límite (volcar todo)">∞ Max</button>
                 </div>
+              </div>
+
+              <div class="panel-actions" style="display: flex; flex-wrap: wrap; gap: 0.3rem; width: 100%; justify-content: space-between;">
+                <button id="refresh-tree-btn" class="btn-sm btn-ghost" title="Refresh files tree" style="padding: 0.2rem 0.5rem;">🔄</button>
+                <button id="select-siblings-btn" class="btn-sm" title="Select all sibling files in same folders" style="padding: 0.2rem 0.5rem; flex: 1;">+ Siblings</button>
+                <button id="clear-selection-btn" class="btn-sm btn-ghost" title="Uncheck selected files" style="padding: 0.2rem 0.5rem; flex: 1;">◻️ Uncheck</button>
+                <button id="clear-tree-btn" class="btn-sm btn-ghost" title="Clear and unload file tree" style="padding: 0.2rem 0.5rem; flex: 1;">✕ Clear</button>
               </div>
             </div>
             <div id="file-tree"></div>
