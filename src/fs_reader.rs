@@ -2,21 +2,47 @@ use ignore::{WalkBuilder, Walk};
 use std::fs;
 use std::path::{Path, PathBuf};
 
+fn is_ignored(e: &ignore::DirEntry) -> bool {
+    let name = e.file_name().to_string_lossy();
+    
+    // Hardcoded folder ignores
+    let is_ignored_dir = matches!(
+        name.as_ref(),
+        "node_modules" | "target" | ".git" | ".idea" | ".vscode" | "dist" | "build" | "__pycache__" | ".next" | ".svelte-kit" | "coverage" | ".DS_Store" | "Thumbs.db"
+    );
+    
+    if is_ignored_dir {
+        return true;
+    }
+    
+    // Hardcoded extension ignores (binaries, locks, etc)
+    if e.file_type().map(|t| t.is_file()).unwrap_or(false) {
+        if let Some(ext) = std::path::Path::new(name.as_ref()).extension().and_then(|s| s.to_str()) {
+            let ext = ext.to_lowercase();
+            let is_binary = matches!(
+                ext.as_str(),
+                "png" | "jpg" | "jpeg" | "gif" | "webp" | "ico" | "svg" | "mp4" | "webm" | "wav" | "mp3" | "ogg" |
+                "zip" | "tar" | "gz" | "7z" | "rar" | "exe" | "dll" | "so" | "dylib" | "bin" | "obj" | "o" | "a" | "lib" | "pdb" |
+                "sqlite" | "db" | "pdf" | "doc" | "docx" | "xls" | "xlsx" | "ppt" | "pptx" |
+                "ttf" | "otf" | "woff" | "woff2" | "eot" | "lock"
+            );
+            if is_binary {
+                return true;
+            }
+        }
+    }
+    
+    false
+}
+
 fn get_walker(root_path: &Path, show_all: bool) -> Walk {
     let mut builder = WalkBuilder::new(root_path);
     builder.max_depth(Some(64));
     if show_all {
         builder.hidden(false).ignore(false).git_ignore(false);
-        // Only ignore .git to prevent absolute chaos, but show everything else
         builder.filter_entry(|e| e.file_name() != ".git");
     } else {
-        builder.filter_entry(|e| {
-            let name = e.file_name().to_string_lossy();
-            !matches!(
-                name.as_ref(),
-                "node_modules" | "target" | ".git" | ".idea" | ".vscode" | "dist" | "build" | "__pycache__" | ".next" | ".svelte-kit" | "coverage"
-            )
-        });
+        builder.filter_entry(|e| !is_ignored(e));
     }
     builder.build()
 }
@@ -33,30 +59,32 @@ pub fn read_directory_entries(dir_path: &Path, show_all: bool) -> Result<Vec<Dir
         return Err("Directory does not exist".into());
     }
     
-    let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
     let mut result = Vec::new();
+    let mut builder = WalkBuilder::new(dir_path);
+    builder.max_depth(Some(1)); // Only read immediate children
     
-    for entry in entries.flatten() {
-        let name = entry.file_name().to_string_lossy().to_string();
-        
-        if !show_all {
-            if matches!(
-                name.as_str(),
-                "node_modules" | "target" | ".git" | ".idea" | ".vscode" | "dist" | "build" | "__pycache__" | ".next" | ".svelte-kit" | "coverage" | ".DS_Store" | "Thumbs.db"
-            ) || name.starts_with('.') {
-                continue;
+    if show_all {
+        builder.hidden(false).ignore(false).git_ignore(false);
+        builder.filter_entry(|e| e.file_name() != ".git");
+    } else {
+        builder.filter_entry(|e| !is_ignored(e));
+    }
+    
+    for entry_res in builder.build() {
+        if let Ok(entry) = entry_res {
+            let path = entry.path();
+            if path == dir_path {
+                continue; // Skip the root directory itself
             }
-        } else if name == ".git" {
-            continue;
+            let name = entry.file_name().to_string_lossy().to_string();
+            let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
+            
+            result.push(DirEntry {
+                name,
+                path: path.to_path_buf(),
+                is_dir,
+            });
         }
-        
-        let path = entry.path();
-        let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
-        result.push(DirEntry {
-            name,
-            path,
-            is_dir,
-        });
     }
     
     result.sort_by(|a, b| {
