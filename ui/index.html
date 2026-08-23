@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Astrocat Lumo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-left">
+          <img src="logo.png" alt="Astrocat Logo" class="app-logo" />
+          <h1>Astrocat Lumo</h1>
+          <button id="select-dir-btn">Select Directory</button>
+        </div>
+        <div class="header-right">
+          <div class="segmented-control" id="split-control" title="Adjust Window Split (UI / Lumo)">
+            <button class="segment" data-ratio="0.35" title="Compact UI (35%)">◨ 35%</button>
+            <button class="segment active" data-ratio="0.50" title="Balanced 50/50">◫ 50%</button>
+            <button class="segment" data-ratio="0.65" title="Expanded UI (65%)">◧ 65%</button>
+            <button class="segment" data-ratio="0.80" title="Focus UI (80%)">█ 80%</button>
+          </div>
+        </div>
+      </header>
+      
+      <div id="repo-path">No repository selected</div>
+
+      <div class="main-content">
+        <div class="top-section">
+          <div class="panel" id="left-panel">
+            <div class="panel-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <h2>Files <span id="selection-count" class="badge">0</span></h2>
+              <label style="font-size: 0.75rem; color: #888; display: flex; align-items: center; gap: 0.2rem; cursor: pointer;">
+                <input type="checkbox" id="show-all-chk"> All Files
+              </label>
+            </div>
+            <div class="panel-actions">
+                <button id="refresh-tree-btn" class="btn-sm btn-ghost" title="Refresh files tree">🔄</button>
+                <button id="select-siblings-btn" class="btn-sm" title="Select all sibling files in same folders">+ Siblings</button>
+                <button id="clear-selection-btn" class="btn-sm btn-ghost" title="Uncheck selected files">Uncheck</button>
+                <button id="clear-tree-btn" class="btn-sm btn-ghost" title="Clear and unload file tree">✕ Clear Tree</button>
+              </div>
+            </div>
+            <div id="file-tree"></div>
+          </div>
+          
+          <div class="panel" id="right-panel">
+            <div id="preview-section" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+              <div class="scope-container">
+                <label class="scope-label">Tree Scope:</label>
+                <div class="segmented-control" id="tree-scope-control">
+                  <button class="segment active" data-mode="full">🌳 Full</button>
+                  <button class="segment" data-mode="scoped">🌿 Scoped</button>
+                  <button class="segment" data-mode="none">🚫 None</button>
+                </div>
+              </div>
+
+              <div class="preview-header">
+                <h2>Context Preview</h2>
+                <span id="preview-stats" class="stats-text">0 chars</span>
+              </div>
+              <div id="context-preview">
+                <pre id="preview-base">Select a directory to inspect repository structure...</pre>
+                <pre id="preview-query"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="horizontal-resizer" title="Drag to resize query area">
+          <div class="h-resizer-knob"></div>
+        </div>
+
+        <div class="panel" id="query-section" style="height: 200px; flex-shrink: 0; min-height: 100px; display: flex; flex-direction: column;">
+          <div class="query-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+            <h2>Query</h2>
+            <button id="send-btn" class="btn-sm" disabled title="Send to Lumo">➤ Lumo</button>
+          </div>
+          <textarea id="query-input" placeholder="¿Cómo conecto combat con movement?"></textarea>
+        </div>
+      </div>
+      <!-- Draggable Splitter Gutter -->
+      <div id="gutter-resizer" title="Drag with mouse to resize UI / Lumo panels">
+        <div class="resizer-knob"></div>
+      </div>
+    </div>
+    
+    <!-- Using Tauri API injected script -->
+    <script>
+      const { invoke } = window.__TAURI__.core;
+    </script>
+    <script src="app.js"></script>
+  </body>
+</html>

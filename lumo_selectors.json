@@ -1,0 +1,5 @@
+{
+  "input_selector": "textarea, input[type=\"text\"]",
+  "response_container": "[data-testid='assistant-message']",
+  "loading_indicator": "[data-testid='loading']"
+}

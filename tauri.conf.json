@@ -1,0 +1,18 @@
+{
+  "productName": "astrocat-lumo",
+  "version": "0.1.0",
+  "identifier": "com.astrocat.lumo",
+  "build": {
+    "frontendDist": "ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all"
+  }
+}
