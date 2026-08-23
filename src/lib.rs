@@ -85,6 +85,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::select_directory,
             commands::get_file_tree,
+            commands::read_directory,
             commands::build_context,
             commands::get_sibling_files,
             commands::inject_to_lumo,

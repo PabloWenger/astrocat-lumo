@@ -253,10 +253,59 @@ button:disabled {
   will-change: transform;
 }
 
+.tree-dir-row {
+  display: flex;
+  align-items: center;
+  padding: 3px 4px;
+  cursor: pointer;
+  border-radius: 3px;
+  user-select: none;
+  font-size: 0.85rem;
+}
+
+.tree-dir-row:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.tree-arrow {
+  display: inline-block;
+  width: 14px;
+  font-size: 0.65rem;
+  color: #777;
+  transition: transform 0.15s ease;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.tree-arrow.open {
+  transform: rotate(90deg);
+  color: #aaa;
+}
+
+.tree-dir-label {
+  margin-left: 4px;
+  color: #e0e0e0;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tree-children {
+  display: none;
+}
+
+.tree-children.open {
+  display: block;
+}
+
 .tree-node {
   display: flex;
   align-items: center;
-  padding: 2px 0;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
+.tree-node:hover {
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .tree-node label {

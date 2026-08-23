@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 fn get_walker(root_path: &Path, show_all: bool) -> Walk {
     let mut builder = WalkBuilder::new(root_path);
+    builder.max_depth(Some(8));
     if show_all {
         builder.hidden(false).ignore(false).git_ignore(false);
         // Only ignore .git to prevent absolute chaos, but show everything else
@@ -18,6 +19,55 @@ fn get_walker(root_path: &Path, show_all: bool) -> Walk {
         });
     }
     builder.build()
+}
+
+#[derive(Debug, serde::Serialize, Clone)]
+pub struct DirEntry {
+    pub name: String,
+    pub path: PathBuf,
+    pub is_dir: bool,
+}
+
+pub fn read_directory_entries(dir_path: &Path, show_all: bool) -> Result<Vec<DirEntry>, String> {
+    if !dir_path.exists() {
+        return Err("Directory does not exist".into());
+    }
+    
+    let entries = fs::read_dir(dir_path).map_err(|e| e.to_string())?;
+    let mut result = Vec::new();
+    
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        
+        if !show_all {
+            if matches!(
+                name.as_str(),
+                "node_modules" | "target" | ".git" | ".idea" | ".vscode" | "dist" | "build" | "__pycache__" | ".next" | ".svelte-kit" | "coverage" | ".DS_Store" | "Thumbs.db"
+            ) || name.starts_with('.') {
+                continue;
+            }
+        } else if name == ".git" {
+            continue;
+        }
+        
+        let path = entry.path();
+        let is_dir = entry.file_type().map(|t| t.is_dir()).unwrap_or(false);
+        result.push(DirEntry {
+            name,
+            path,
+            is_dir,
+        });
+    }
+    
+    result.sort_by(|a, b| {
+        match (a.is_dir, b.is_dir) {
+            (true, false) => std::cmp::Ordering::Less,
+            (false, true) => std::cmp::Ordering::Greater,
+            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+        }
+    });
+    
+    Ok(result)
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -101,8 +151,11 @@ pub fn render_tree(root_path: &Path, selected_files: &[String], mode: &str, show
     render_full_tree(root_path, show_all)
 }
 
+const MAX_TREE_RENDER_ENTRIES: usize = 500;
+
 fn render_full_tree(root_path: &Path, show_all: bool) -> String {
     let mut tree_str = String::new();
+    let mut count = 0;
     let walker = get_walker(root_path, show_all);
     
     for result in walker {
@@ -114,6 +167,12 @@ fn render_full_tree(root_path: &Path, show_all: bool) -> String {
             if depth == 0 {
                 tree_str.push_str(&format!("{}\n", root_path.file_name().unwrap_or_default().to_string_lossy()));
                 continue;
+            }
+            
+            count += 1;
+            if count > MAX_TREE_RENDER_ENTRIES {
+                tree_str.push_str("  [... árbol truncado: más de 500 elementos. Usa el modo 'Scoped' para ver solo tus archivos seleccionados ...]\n");
+                break;
             }
             
             let indent = "  ".repeat(depth.saturating_sub(1));

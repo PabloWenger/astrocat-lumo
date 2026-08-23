@@ -17,6 +17,11 @@ pub fn get_file_tree(path: String, show_all: Option<bool>) -> Result<fs_reader::
 }
 
 #[tauri::command]
+pub fn read_directory(path: String, show_all: Option<bool>) -> Result<Vec<fs_reader::DirEntry>, String> {
+    fs_reader::read_directory_entries(Path::new(&path), show_all.unwrap_or(false))
+}
+
+#[tauri::command]
 pub fn build_context(
     root: String,
     files: Vec<String>,

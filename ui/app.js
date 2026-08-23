@@ -224,76 +224,99 @@ document.addEventListener('DOMContentLoaded', () => {
     selectionCountEl.textContent = selectedFiles.size;
   }
 
-  async function loadFileTree(path, preserveSelection = false) {
+  async function loadFileTree(rootPath, preserveSelection = false) {
     try {
       if (!preserveSelection) {
-        fileTreeEl.innerHTML = '<div style="color: #888; padding: 0.5rem;">Scanning files...</div>';
         selectedFiles.clear();
       }
       updateSelectionBadge();
+      fileTreeEl.innerHTML = '<div style="color: #888; padding: 0.5rem;">Cargando archivos...</div>';
 
-      const tree = await invoke('get_file_tree', { path, showAll: showAllToggle });
-      fileTreeData = tree;
-
+      const entries = await invoke('read_directory', { path: rootPath, showAll: showAllToggle });
       fileTreeEl.innerHTML = '';
-      renderTree(tree.children, fileTreeEl, 0);
 
-      // Prune selected files that no longer exist
-      if (preserveSelection && selectedFiles.size > 0) {
-        const existingPaths = new Set();
-        function collectPaths(node) {
-          if (node.path) existingPaths.add(node.path);
-          if (node.children) {
-            node.children.forEach(collectPaths);
-          }
-        }
-        collectPaths(tree);
-        for (const file of Array.from(selectedFiles)) {
-          if (!existingPaths.has(file)) {
-            selectedFiles.delete(file);
-          }
-        }
-        updateSelectionBadge();
+      if (!entries || entries.length === 0) {
+        fileTreeEl.innerHTML = '<div style="color: #888; padding: 0.5rem; font-style: italic;">Carpeta vacía</div>';
+      } else {
+        renderDirectoryLevel(entries, fileTreeEl, 0);
       }
 
-      // Immediately render preview of repository structure
       scheduleUpdateBaseContext();
     } catch (e) {
-      fileTreeEl.innerHTML = `<span style="color: red">Error: ${e}</span>`;
+      console.error(e);
+      fileTreeEl.innerHTML = `<span style="color: #ff5555; padding: 0.5rem;">Error: ${e}</span>`;
     }
   }
 
-  function renderTree(nodes, container, depth) {
-    if (!nodes) return;
+  function renderDirectoryLevel(entries, container, depth) {
+    if (!entries) return;
 
-    nodes.sort((a, b) => {
-      if (a.is_dir && !b.is_dir) return -1;
-      if (!a.is_dir && b.is_dir) return 1;
-      return a.name.localeCompare(b.name);
-    });
+    for (const entry of entries) {
+      const nodeEl = document.createElement('div');
+      nodeEl.className = 'tree-item';
+      
+      if (entry.is_dir) {
+        const row = document.createElement('div');
+        row.className = 'tree-dir-row';
+        row.style.paddingLeft = `${depth * 14}px`;
 
-    for (const node of nodes) {
-      const div = document.createElement('div');
-      div.className = 'tree-node';
-      div.style.paddingLeft = `${depth * 14}px`;
+        const arrow = document.createElement('span');
+        arrow.className = 'tree-arrow';
+        arrow.textContent = '▶';
 
-      if (node.is_dir) {
-        div.innerHTML = `<span>📁 ${node.name}</span>`;
-        container.appendChild(div);
-        if (node.children) {
-          renderTree(node.children, container, depth + 1);
-        }
+        const label = document.createElement('span');
+        label.className = 'tree-dir-label';
+        label.textContent = `📁 ${entry.name}`;
+
+        row.appendChild(arrow);
+        row.appendChild(label);
+        nodeEl.appendChild(row);
+
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'tree-children';
+        nodeEl.appendChild(childrenContainer);
+
+        let loaded = false;
+        row.addEventListener('click', async () => {
+          const isOpen = childrenContainer.classList.contains('open');
+          if (isOpen) {
+            childrenContainer.classList.remove('open');
+            arrow.classList.remove('open');
+          } else {
+            arrow.classList.add('open');
+            childrenContainer.classList.add('open');
+            if (!loaded) {
+              childrenContainer.innerHTML = `<div style="padding-left: ${(depth + 1) * 14}px; color: #888; font-size: 0.75rem;">Cargando...</div>`;
+              try {
+                const subEntries = await invoke('read_directory', { path: entry.path, showAll: showAllToggle });
+                childrenContainer.innerHTML = '';
+                if (!subEntries || subEntries.length === 0) {
+                  childrenContainer.innerHTML = `<div style="padding-left: ${(depth + 1) * 14}px; color: #666; font-size: 0.75rem; font-style: italic;">(vacío)</div>`;
+                } else {
+                  renderDirectoryLevel(subEntries, childrenContainer, depth + 1);
+                }
+                loaded = true;
+              } catch (err) {
+                childrenContainer.innerHTML = `<div style="padding-left: ${(depth + 1) * 14}px; color: #ff5555; font-size: 0.75rem;">Error: ${err}</div>`;
+              }
+            }
+          }
+        });
       } else {
+        const row = document.createElement('div');
+        row.className = 'tree-node';
+        row.style.paddingLeft = `${depth * 14 + 14}px`;
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.id = `chk-${node.path}`;
-        checkbox.checked = selectedFiles.has(node.path);
+        checkbox.id = `chk-${entry.path}`;
+        checkbox.checked = selectedFiles.has(entry.path);
 
         checkbox.addEventListener('change', (e) => {
           if (e.target.checked) {
-            selectedFiles.add(node.path);
+            selectedFiles.add(entry.path);
           } else {
-            selectedFiles.delete(node.path);
+            selectedFiles.delete(entry.path);
           }
           updateSelectionBadge();
           scheduleUpdateBaseContext();
@@ -301,12 +324,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const label = document.createElement('label');
         label.htmlFor = checkbox.id;
-        label.textContent = `📄 ${node.name}`;
+        label.textContent = `📄 ${entry.name}`;
 
-        div.appendChild(checkbox);
-        div.appendChild(label);
-        container.appendChild(div);
+        row.appendChild(checkbox);
+        row.appendChild(label);
+        nodeEl.appendChild(row);
       }
+
+      container.appendChild(nodeEl);
     }
   }
 
