@@ -56,10 +56,10 @@ header {
 }
 
 .app-logo {
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  object-fit: cover;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: contain;
 }
 
 h1 {
