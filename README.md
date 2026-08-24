@@ -1,4 +1,4 @@
-# Astrocat Lumo 🐾 
+# Astrocat Lumo 🐾 [![Release Astrocat Lumo](https://github.com/PabloWenger/astrocat-lumo/actions/workflows/release.yml/badge.svg)](https://github.com/PabloWenger/astrocat-lumo/actions/workflows/release.yml)
 ###### version actual v0.1.4
 ### Mejoras
 - **README reestructurado:** Separación visual corregida en Casos de Uso del Contexto (Full Scope, Scoped, Token Limits, Inyección en Vivo) con spacing consistente entre ítems.
