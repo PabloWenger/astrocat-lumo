@@ -1,4 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+  // Links in footer
+  document.querySelectorAll('.app-footer a').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      invoke('open_url', { url: el.href }).catch(console.error);
+    });
+  });
+
+  // Cute Heart Animation
+  const heart = document.getElementById('footer-heart');
+  if (heart) {
+    heart.addEventListener('click', () => {
+      heart.classList.remove('animate-explode');
+      void heart.offsetWidth; // force reflow
+      heart.classList.add('animate-explode');
+    });
+  }
+
+  // Cute Cat Animation
+  const logo = document.querySelector('.app-logo');
+  if (logo) {
+    logo.addEventListener('click', () => {
+      logo.classList.remove('animate-cat');
+      void logo.offsetWidth; // force reflow
+      logo.classList.add('animate-cat');
+    });
+  }
+
   const selectDirBtn = document.getElementById('select-dir-btn');
   const sendBtn = document.getElementById('send-btn');
   const repoPathEl = document.getElementById('repo-path');
@@ -375,12 +404,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let budgetTokens = 0;
     if (currentPromptLimit > 0) {
       budgetTokens = Math.ceil(currentPromptLimit / 4);
-      footerBudget.textContent = `${formatK(budgetTokens)} tokens`;
+      footerBudget.innerHTML = `${formatK(currentPromptLimit)} chars <span style="opacity: 0.5">/ ${formatK(budgetTokens)} tkns</span>`;
     } else {
-      footerBudget.textContent = `∞ tokens`;
+      footerBudget.innerHTML = `∞ chars <span style="opacity: 0.5">/ ∞ tkns</span>`;
     }
 
-    footerTokens.textContent = `${formatK(approxTokens)} tokens`;
+    footerTokens.innerHTML = `${formatK(totalChars)} chars <span style="opacity: 0.5">/ ${formatK(approxTokens)} tkns</span>`;
     previewTokensBadge.textContent = `${formatK(approxTokens)} tokens`;
     previewTokensBadge.title = `estimated tokens for selected files`;
 

@@ -102,7 +102,8 @@ pub fn run() {
             commands::get_sibling_files,
             commands::inject_to_lumo,
             commands::set_split_ratio,
-            commands::drag_split_delta
+            commands::drag_split_delta,
+            commands::open_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
