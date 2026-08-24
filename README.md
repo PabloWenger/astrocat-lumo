@@ -2,8 +2,6 @@
 
 **Astrocat Lumo** es un *sidecar* de escritorio nativo, ultrarrápido y seguro, construido en **Rust + Tauri 2.0**. Su objetivo es inspeccionar ecosistemas locales de código, ensamblar contextos estructurados en tiempo real, y sincronizarlos fluidamente con **Proton Lumo** (`lumo.proton.me`) dentro de una experiencia de ventana dual.
 
-![Astrocat Lumo UI](ui/screenshot.png)
-
 ---
 
 ## ✨ Características Principales
@@ -19,19 +17,19 @@ El backend en Rust respeta tu `.gitignore` y filtra automáticamente extensiones
 
 **1. Árbol de Contexto Completo (Full Scope)**
 Captura la topología completa del proyecto, ideal para cuando Lumo necesita entender la estructura general de tu repositorio.
-![Full Scope](ui/astrocat_scope.png)
+![Full Scope](ui/ss_full_scope.png)
 
 **2. Árbol Recortado (Scoped)**
 Genera un árbol topológico inteligente (`🌿 Scoped`) que se recorta para mostrar únicamente las ramas que conectan los archivos que has seleccionado, ahorrando miles de tokens sin perder contexto estructural.
-![Scoped Context](ui/astrocat_scoped.png)
+![Scoped Context](ui/ss_scoped.png)
 
 **3. Control de Presupuesto (Token Limits)**
 Barra de progreso visual que monitorea constantemente los caracteres leídos y los tokens estimados frente a tu límite configurado, alertando visualmente si te acercas al presupuesto máximo.
-![Token limits](ui/astrocat_tokens.png)
+![Token limits](ui/ss_token_limits.png)
 
 **4. Inyección en Vivo**
 Lumo ensambla y formatea el código instantáneamente, inyectándolo en el área de texto de Proton Lumo para que puedas chatear con tu código sin fricciones.
-![Live Injection](ui/astrocat_injection.png)
+![Live Injection](ui/ss_injection.png)
 
 ---
 
