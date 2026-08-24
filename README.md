@@ -41,6 +41,14 @@
 ### Descargar Ejecutable
 Dirígete a la pestaña de **[Releases](https://github.com/PabloWenger/astrocat-lumo/releases)** en este repositorio y descarga la última versión para tu sistema operativo (`.dmg`, `.exe` o `.deb`).
 
+**Nota para usuarios de macOS:**
+Dado que la aplicación aún no está firmada con un certificado de desarrollador de Apple, macOS la pondrá en cuarentena. Para abrirla tras instalarla en Aplicaciones, ejecuta el siguiente comando en tu terminal:
+```bash
+xattr -cr /Applications/Astrocat\ Lumo.app
+# o si se instaló con el nombre del binario:
+xattr -cr /Applications/astrocat-lumo.app
+```
+
 ### Compilar desde el Código Fuente
 1. Asegúrate de tener [Rust](https://www.rust-lang.org/) instalado y las [dependencias de Tauri](https://v2.tauri.app/start/prerequisites/).
 2. Clona el repositorio y ejecuta:
