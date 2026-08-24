@@ -429,10 +429,6 @@ textarea:focus {
   padding: 0 0.5rem;
 }
 
-.query-actions-left {
-  display: flex;
-  gap: 0.5rem;
-}
 
 .btn-secondary {
   background: var(--bg-hover);
