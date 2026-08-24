@@ -12,6 +12,7 @@
     }
   },
   "bundle": {
+    "license": "MIT",
     "active": true,
     "targets": "all",
     "icon": [
