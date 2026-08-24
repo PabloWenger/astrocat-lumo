@@ -29,6 +29,10 @@ Genera un árbol topológico inteligente (`🌿 Scoped`) que se recorta para mos
 Barra de progreso visual que monitorea constantemente los caracteres leídos y los tokens estimados frente a tu límite configurado, alertando visualmente si te acercas al presupuesto máximo.
 ![Token limits](ui/case_3.png)
 
+**4. Inyección en Vivo**
+Lumo ensambla y formatea el código instantáneamente, inyectándolo en el área de texto de Proton Lumo para que puedas chatear con tu código sin fricciones.
+![Live Injection](ui/case_4.png)
+
 ---
 
 ## 🚀 Instalación y Uso
