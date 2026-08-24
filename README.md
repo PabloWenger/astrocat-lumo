@@ -3,6 +3,8 @@
 **Astrocat Lumo** es un *sidecar* de escritorio nativo, ultrarrápido y seguro, construido en **Rust + Tauri 2.0**. Su objetivo es inspeccionar ecosistemas locales de código, ensamblar contextos estructurados en tiempo real, y sincronizarlos fluidamente con **Proton Lumo** (`lumo.proton.me`) dentro de una experiencia de ventana dual.
 
 ---
+![complete_screenshot](ui/screenshot.png)
+---
 
 ## ✨ Características Principales
 
