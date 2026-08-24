@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const selectDirBtn = document.getElementById('select-dir-btn');
   const sendBtn = document.getElementById('send-btn');
+  const reloadLumoBtn = document.getElementById('reload-lumo-btn');
   const repoPathEl = document.getElementById('repo-path');
   const fileTreeEl = document.getElementById('file-tree');
   const queryInput = document.getElementById('query-input');
@@ -172,6 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+
+  if (reloadLumoBtn) {
+    reloadLumoBtn.addEventListener('click', () => {
+      invoke('reload_lumo').catch(console.error);
+    });
+  }
 
   // File Actions
   if (refreshTreeBtn) {

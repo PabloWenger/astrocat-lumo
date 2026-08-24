@@ -120,3 +120,12 @@ pub fn open_url(url: String) -> Result<(), String> {
 
     Ok(())
 }
+
+#[tauri::command]
+pub fn reload_lumo(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri::Manager;
+    if let Some(lumo) = app.get_webview("lumo") {
+        lumo.navigate(tauri::Url::parse("https://lumo.proton.me").unwrap()).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
