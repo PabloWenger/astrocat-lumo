@@ -76,7 +76,8 @@ pub fn run() {
                         let _ = lumo.navigate(url);
                     }
                     tauri::webview::NewWindowResponse::Deny
-                });
+                })
+                .on_navigation(|_| true);
             let _lumo = window.add_child(
                 lumo_webview,
                 tauri::Position::Physical(PhysicalPosition::new(ui_width as i32, 0)),
@@ -103,7 +104,7 @@ pub fn run() {
             commands::inject_to_lumo,
             commands::set_split_ratio,
             commands::drag_split_delta,
-            commands::open_url
+            commands::open_url, commands::reload_lumo
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
