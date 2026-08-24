@@ -59,4 +59,4 @@ cargo tauri build # Compilar para producción
 
 ## 📄 Licencia
 
-MIT / Apache 2.0 - created with ♥ by [m[00]n](https://github.com/PabloWenger) & [astrocatstud.io](https://astrocatstud.io).
+MIT / Apache 2.0 - created with ♥ by [m[00]n](https://github.com/PabloWenger) & [astrocatstud.io](https://astrocatstud.io)
