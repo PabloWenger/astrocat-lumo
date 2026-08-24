@@ -1,5 +1,17 @@
-# Astrocat Lumo 🐾
+# Astrocat Lumo 🐾 
+###### version actual v0.1.4
+### Mejoras
+- **README reestructurado:** Separación visual corregida en Casos de Uso del Contexto (Full Scope, Scoped, Token Limits, Inyección en Vivo) con spacing consistente entre ítems.
+- Jerarquía visual mejorada para lectura rápida del repositorio.
 
+---
+
+**Descargas:** 👇 revisarAssets abajo
+`.dmg` (macOS) · `.exe` (Windows) · `.deb` (Linux)
+
+---
+
+MIT / Apache 2.0 — by [m[00]n](https://github.com/PabloWenger) & [astrocatstud.io](https://astrocatstud.io)
 **Astrocat Lumo** es un *sidecar* de escritorio nativo, ultrarrápido y seguro, construido en **Rust + Tauri 2.0**. Su objetivo es inspeccionar ecosistemas locales de código, ensamblar contextos estructurados en tiempo real, y sincronizarlos fluidamente con **Proton Lumo** (`lumo.proton.me`) dentro de una experiencia de ventana dual.
 
 ---
